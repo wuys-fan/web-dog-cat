@@ -73,8 +73,8 @@ const AdminBookingsPage = () => {
   };
 
   const filteredBookings = bookings.filter(booking =>
-    booking.bookingCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    booking.customer.name.toLowerCase().includes(searchTerm.toLowerCase())
+    booking.bookingCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    booking.userName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -153,14 +153,14 @@ const AdminBookingsPage = () => {
                   <MdPets className="text-petshop-orange" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-800">{booking.pet.name}</p>
-                  <p className="text-sm text-gray-500">{booking.pet.breed} - {booking.pet.weight}kg</p>
+                  <p className="font-medium text-gray-800">{booking.petName || 'N/A'}</p>
+                  <p className="text-sm text-gray-500">{booking.petBreed || ''} - {booking.petWeight || ''}kg</p>
                 </div>
               </div>
 
               <div className="text-sm text-gray-600">
-                <p><span className="font-medium">Dịch vụ:</span> {booking.service.name}</p>
-                <p><span className="font-medium">Khách:</span> {booking.customer.name} - {booking.customer.phone}</p>
+                <p><span className="font-medium">Dịch vụ:</span> {booking.serviceName || 'N/A'}</p>
+                <p><span className="font-medium">Khách:</span> {booking.userName || 'N/A'} - {booking.userPhone || ''}</p>
               </div>
 
               <div className="flex items-center gap-4 text-sm">
@@ -170,12 +170,12 @@ const AdminBookingsPage = () => {
                 </div>
                 <div className="flex items-center gap-1 text-gray-600">
                   <FiClock className="text-petshop-yellow" />
-                  {booking.bookingTime}
+                  {booking.startTime}
                 </div>
               </div>
 
               <div className="flex items-center justify-between pt-3 border-t">
-                <span className="font-bold text-petshop-orange">{formatPrice(booking.totalAmount)}</span>
+                <span className="font-bold text-petshop-orange">{formatPrice(booking.price)}</span>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setSelectedBooking(booking)}
@@ -232,7 +232,7 @@ const AdminBookingsPage = () => {
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-800">
-                Chi tiết lịch hẹn {selectedBooking.bookingCode}
+                Chi tiết lịch hẹn {selectedBooking?.bookingCode || 'N/A'}
               </h2>
               <button
                 onClick={() => setSelectedBooking(null)}
@@ -245,37 +245,45 @@ const AdminBookingsPage = () => {
             <div className="space-y-4">
               <div className="bg-gray-50 rounded-xl p-4">
                 <h3 className="font-medium text-gray-800 mb-2">Thông tin thú cưng</h3>
-                <p><span className="text-gray-500">Tên:</span> {selectedBooking.pet.name}</p>
-                <p><span className="text-gray-500">Loại:</span> {selectedBooking.pet.type}</p>
-                <p><span className="text-gray-500">Giống:</span> {selectedBooking.pet.breed}</p>
-                <p><span className="text-gray-500">Cân nặng:</span> {selectedBooking.pet.weight} kg</p>
+                <p><span className="text-gray-500">Tên:</span> {selectedBooking.petName || 'N/A'}</p>
+                <p><span className="text-gray-500">Loại:</span> {selectedBooking.petType || 'N/A'}</p>
+                <p><span className="text-gray-500">Giống:</span> {selectedBooking.petBreed || 'N/A'}</p>
+                <p><span className="text-gray-500">Cân nặng:</span> {selectedBooking.petWeight || 'N/A'} kg</p>
               </div>
 
               <div className="bg-gray-50 rounded-xl p-4">
                 <h3 className="font-medium text-gray-800 mb-2">Thông tin khách hàng</h3>
-                <p><span className="text-gray-500">Tên:</span> {selectedBooking.customer.name}</p>
-                <p><span className="text-gray-500">SĐT:</span> {selectedBooking.customer.phone}</p>
+                <p><span className="text-gray-500">Tên:</span> {selectedBooking.userName || 'N/A'}</p>
+                <p><span className="text-gray-500">SĐT:</span> {selectedBooking.userPhone || 'N/A'}</p>
+                <p><span className="text-gray-500">Email:</span> {selectedBooking.userEmail || 'N/A'}</p>
               </div>
 
               <div className="bg-gray-50 rounded-xl p-4">
                 <h3 className="font-medium text-gray-800 mb-2">Chi tiết dịch vụ</h3>
-                <p><span className="text-gray-500">Dịch vụ:</span> {selectedBooking.service.name}</p>
-                <p><span className="text-gray-500">Thời gian:</span> {selectedBooking.service.duration} phút</p>
-                <p><span className="text-gray-500">Ngày hẹn:</span> {selectedBooking.bookingDate}</p>
-                <p><span className="text-gray-500">Giờ hẹn:</span> {selectedBooking.bookingTime}</p>
+                <p><span className="text-gray-500">Dịch vụ:</span> {selectedBooking.serviceName || 'N/A'}</p>
+                <p><span className="text-gray-500">Thời gian:</span> {selectedBooking.duration || 'N/A'} phút</p>
+                <p><span className="text-gray-500">Ngày hẹn:</span> {selectedBooking.bookingDate || 'N/A'}</p>
+                <p><span className="text-gray-500">Giờ hẹn:</span> {selectedBooking.startTime || 'N/A'}</p>
               </div>
 
-              {selectedBooking.notes && (
+              {selectedBooking?.customerNote && (
                 <div className="bg-yellow-50 rounded-xl p-4">
-                  <h3 className="font-medium text-gray-800 mb-2">Ghi chú</h3>
-                  <p className="text-gray-600">{selectedBooking.notes}</p>
+                  <h3 className="font-medium text-gray-800 mb-2">Ghi chú khách</h3>
+                  <p className="text-gray-600">{selectedBooking.customerNote}</p>
+                </div>
+              )}
+
+              {selectedBooking?.staffNote && (
+                <div className="bg-blue-50 rounded-xl p-4">
+                  <h3 className="font-medium text-gray-800 mb-2">Ghi chú nhân viên</h3>
+                  <p className="text-gray-600">{selectedBooking.staffNote}</p>
                 </div>
               )}
 
               <div className="flex items-center justify-between pt-4 border-t">
                 <span className="text-lg font-medium text-gray-800">Tổng cộng</span>
                 <span className="text-2xl font-bold text-petshop-orange">
-                  {formatPrice(selectedBooking.totalAmount)}
+                  {formatPrice(selectedBooking?.price || 0)}
                 </span>
               </div>
             </div>

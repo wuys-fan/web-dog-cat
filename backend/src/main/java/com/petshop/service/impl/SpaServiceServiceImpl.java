@@ -114,6 +114,7 @@ public class SpaServiceServiceImpl implements SpaServiceService {
     }
     
     @Override
+    @Transactional
     public SpaServiceDTO getServiceById(Long id) {
         SpaService service = spaServiceRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Dịch vụ không tồn tại"));
@@ -121,6 +122,7 @@ public class SpaServiceServiceImpl implements SpaServiceService {
     }
     
     @Override
+    @Transactional
     public SpaServiceDTO getServiceBySlug(String slug) {
         SpaService service = spaServiceRepository.findBySlug(slug)
             .orElseThrow(() -> new ResourceNotFoundException("Dịch vụ không tồn tại"));
@@ -128,6 +130,7 @@ public class SpaServiceServiceImpl implements SpaServiceService {
     }
     
     @Override
+    @Transactional
     public List<SpaServiceDTO> getAllServices() {
         return spaServiceRepository.findAll().stream()
             .map(this::mapToDTO)
@@ -135,6 +138,7 @@ public class SpaServiceServiceImpl implements SpaServiceService {
     }
     
     @Override
+    @Transactional
     public List<SpaServiceDTO> getActiveServices() {
         return spaServiceRepository.findByActiveOrderByDisplayOrderAsc(true).stream()
             .map(this::mapToDTO)

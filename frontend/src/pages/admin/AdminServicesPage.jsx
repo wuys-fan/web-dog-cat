@@ -12,12 +12,12 @@ const AdminServicesPage = () => {
   const [editingService, setEditingService] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
+    slug: '',
     description: '',
     duration: 60,
-    basePrice: '',
     image: '',
-    petTypes: ['DOG', 'CAT'],
-    status: 'ACTIVE',
+    petType: null,
+    pricings: [],
   });
 
   useEffect(() => {
@@ -27,7 +27,8 @@ const AdminServicesPage = () => {
   const fetchServices = async () => {
     try {
       const response = await servicesApi.getAll();
-      setServices(response.data);
+      const data = Array.isArray(response.data) ? response.data : response.data?.content || [];
+      setServices(data);
     } catch (error) {
       console.error('Error fetching services:', error);
       toast.error('Không thể tải danh sách dịch vụ');
@@ -44,9 +45,7 @@ const AdminServicesPage = () => {
   const handlePetTypeChange = (type) => {
     setFormData(prev => ({
       ...prev,
-      petTypes: prev.petTypes.includes(type)
-        ? prev.petTypes.filter(t => t !== type)
-        : [...prev.petTypes, type],
+      petType: prev.petType === type ? null : type,
     }));
   };
 
@@ -73,12 +72,12 @@ const AdminServicesPage = () => {
     setEditingService(service);
     setFormData({
       name: service.name,
+      slug: service.slug,
       description: service.description,
       duration: service.duration,
-      basePrice: service.basePrice,
-      image: service.image,
-      petTypes: service.petTypes,
-      status: service.status,
+      image: service.imageUrl || '',
+      petType: service.petType || null,
+      pricings: service.pricingList || [],
     });
     setShowModal(true);
   };
@@ -97,9 +96,9 @@ const AdminServicesPage = () => {
 
   const handleToggleStatus = async (service) => {
     try {
-      const newStatus = service.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-      await servicesApi.update(service.id, { ...service, status: newStatus });
-      toast.success(`Đã ${newStatus === 'ACTIVE' ? 'kích hoạt' : 'ẩn'} dịch vụ`);
+      const newActive = !service.active;
+      await servicesApi.update(service.id, { ...service, active: newActive });
+      toast.success(`Đã ${newActive ? 'kích hoạt' : 'ẩn'} dịch vụ`);
       fetchServices();
     } catch (error) {
       toast.error('Không thể cập nhật trạng thái');
@@ -110,12 +109,12 @@ const AdminServicesPage = () => {
     setEditingService(null);
     setFormData({
       name: '',
+      slug: '',
       description: '',
       duration: 60,
-      basePrice: '',
       image: '',
-      petTypes: ['DOG', 'CAT'],
-      status: 'ACTIVE',
+      petType: null,
+      pricings: [],
     });
   };
 
@@ -169,7 +168,7 @@ const AdminServicesPage = () => {
           >
             <div className="relative h-40">
               <img
-                src={service.image}
+                src={service.imageUrl}
                 alt={service.name}
                 className="w-full h-full object-cover"
               />
@@ -177,13 +176,13 @@ const AdminServicesPage = () => {
                 <button
                   onClick={() => handleToggleStatus(service)}
                   className={`w-8 h-8 rounded-full flex items-center justify-center shadow-md ${
-                    service.status === 'ACTIVE' ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'
+                    service.active ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'
                   }`}
                 >
-                  {service.status === 'ACTIVE' ? <FiEye /> : <FiEyeOff />}
+                  {service.active ? <FiEye /> : <FiEyeOff />}
                 </button>
               </div>
-              {service.status === 'INACTIVE' && (
+              {!service.active && (
                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                   <span className="bg-gray-800 text-white px-3 py-1 rounded-full text-sm">Đã ẩn</span>
                 </div>
@@ -200,20 +199,20 @@ const AdminServicesPage = () => {
                 </div>
                 <div className="flex items-center gap-1 text-petshop-orange font-medium">
                   <FiDollarSign />
-                  Từ {formatPrice(service.basePrice)}
+                  Từ {formatPrice(service.minPrice)}
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-1 mb-4">
-                {service.petTypes.map(type => (
-                  <span key={type} className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
-                    {petTypeOptions.find(p => p.value === type)?.label || type}
+                {service.petType && (
+                  <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+                    {petTypeOptions.find(p => p.value === service.petType)?.label || service.petType}
                   </span>
-                ))}
+                )}
               </div>
 
               <div className="flex items-center justify-between pt-3 border-t">
-                <span className="text-sm text-gray-500">{service.bookingsCount} lượt đặt</span>
+                <span className="text-sm text-gray-500">Dịch vụ SPA</span>
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleEdit(service)}
@@ -323,6 +322,15 @@ const AdminServicesPage = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Bảng giá theo cân nặng
+                </label>
+                <div className="text-sm text-gray-600 mb-2">
+                  {formData.pricings?.length || 0} mục giá
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Loại thú cưng áp dụng
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -330,14 +338,15 @@ const AdminServicesPage = () => {
                     <label
                       key={type.value}
                       className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer border-2 transition-colors ${
-                        formData.petTypes.includes(type.value)
+                        formData.petType === type.value
                           ? 'border-petshop-orange bg-petshop-orange/10 text-petshop-orange'
                           : 'border-gray-200 text-gray-600 hover:border-gray-300'
                       }`}
                     >
                       <input
-                        type="checkbox"
-                        checked={formData.petTypes.includes(type.value)}
+                        type="radio"
+                        name="petType"
+                        checked={formData.petType === type.value}
                         onChange={() => handlePetTypeChange(type.value)}
                         className="hidden"
                       />
@@ -346,21 +355,6 @@ const AdminServicesPage = () => {
                     </label>
                   ))}
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Trạng thái
-                </label>
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                  className="input-field"
-                >
-                  <option value="ACTIVE">Hoạt động</option>
-                  <option value="INACTIVE">Tạm ẩn</option>
-                </select>
               </div>
 
               <div className="flex gap-3 pt-4">

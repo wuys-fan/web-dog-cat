@@ -3,7 +3,7 @@ package com.petshop.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
-import java.util.List;
+//import java.util.List;
 
 @Data
 public class CategoryRequest {

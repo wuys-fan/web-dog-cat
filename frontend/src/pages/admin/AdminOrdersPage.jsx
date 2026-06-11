@@ -81,8 +81,8 @@ const AdminOrdersPage = () => {
   };
 
   const filteredOrders = orders.filter(order =>
-    order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.customer.name.toLowerCase().includes(searchTerm.toLowerCase())
+    order.orderCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    order.userName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -152,17 +152,17 @@ const AdminOrdersPage = () => {
                   transition={{ delay: index * 0.05 }}
                   className="hover:bg-gray-50"
                 >
-                  <td className="px-6 py-4 font-medium text-gray-800">{order.orderNumber}</td>
+                  <td className="px-6 py-4 font-medium text-gray-800">{order.orderCode}</td>
                   <td className="px-6 py-4">
                     <div>
-                      <p className="font-medium text-gray-800">{order.customer.name}</p>
-                      <p className="text-sm text-gray-500">{order.customer.phone}</p>
+                      <p className="font-medium text-gray-800">{order.userName}</p>
+                      <p className="text-sm text-gray-500">{order.userPhone}</p>
                     </div>
                   </td>
                   <td className="px-6 py-4 font-medium text-petshop-orange">
                     {formatPrice(order.totalAmount)}
                   </td>
-                  <td className="px-6 py-4 text-gray-600">{order.paymentMethod}</td>
+                  <td className="px-6 py-4 text-gray-600">{order.paymentMethod?.replace(/_/g, ' ') || 'N/A'}</td>
                   <td className="px-6 py-4">{getStatusBadge(order.status)}</td>
                   <td className="px-6 py-4 text-gray-500 text-sm">{formatDate(order.createdAt)}</td>
                   <td className="px-6 py-4">
@@ -219,7 +219,7 @@ const AdminOrdersPage = () => {
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-800">
-                Chi tiết đơn hàng {selectedOrder.orderNumber}
+                Chi tiết đơn hàng {selectedOrder?.orderCode || 'N/A'}
               </h2>
               <button
                 onClick={() => setSelectedOrder(null)}
@@ -233,40 +233,71 @@ const AdminOrdersPage = () => {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="bg-gray-50 rounded-xl p-4">
                   <h3 className="font-medium text-gray-800 mb-2">Thông tin khách hàng</h3>
-                  <p className="text-gray-600">{selectedOrder.customer.name}</p>
-                  <p className="text-gray-600">{selectedOrder.customer.phone}</p>
-                  <p className="text-gray-600">{selectedOrder.customer.email}</p>
+                  <p className="text-gray-600">{selectedOrder?.userName || 'N/A'}</p>
+                  <p className="text-gray-600">{selectedOrder?.userPhone || 'N/A'}</p>
+                  <p className="text-gray-600">{selectedOrder?.userEmail || 'N/A'}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-4">
                   <h3 className="font-medium text-gray-800 mb-2">Địa chỉ giao hàng</h3>
-                  <p className="text-gray-600">{selectedOrder.shippingAddress}</p>
+                  <p className="text-gray-600">{selectedOrder?.receiverName || 'N/A'}</p>
+                  <p className="text-gray-600">{selectedOrder?.receiverPhone || 'N/A'}</p>
+                  <p className="text-gray-600">{selectedOrder?.shippingAddress || 'N/A'}</p>
                 </div>
               </div>
 
               <div>
                 <h3 className="font-medium text-gray-800 mb-3">Sản phẩm</h3>
                 <div className="space-y-2">
-                  {selectedOrder.items.map(item => (
+                  {selectedOrder?.items?.map(item => (
                     <div key={item.id} className="flex items-center justify-between py-2 border-b">
                       <div>
                         <p className="font-medium text-gray-800">{item.productName}</p>
+                        {item.variantName && <p className="text-sm text-gray-500">{item.variantName}</p>}
                         <p className="text-sm text-gray-500">x{item.quantity}</p>
                       </div>
-                      <p className="font-medium text-petshop-orange">{formatPrice(item.price * item.quantity)}</p>
+                      <p className="font-medium text-petshop-orange">{formatPrice(item.subtotal)}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-4 border-t">
-                <span className="text-lg font-medium text-gray-800">Tổng cộng</span>
-                <span className="text-2xl font-bold text-petshop-orange">
-                  {formatPrice(selectedOrder.totalAmount)}
-                </span>
+              <div className="space-y-3 bg-gray-50 rounded-xl p-4">
+                <h3 className="font-medium text-gray-800 mb-3">Chi tiết thanh toán</h3>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Tạm tính:</span>
+                  <span className="font-medium">{formatPrice(selectedOrder?.subtotal || 0)}</span>
+                </div>
+                {selectedOrder?.shippingFee ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Phí vận chuyển:</span>
+                    <span className="font-medium">{formatPrice(selectedOrder.shippingFee)}</span>
+                  </div>
+                ) : null}
+                {selectedOrder?.discountAmount ? (
+                  <div className="flex items-center justify-between text-red-600">
+                    <span>Giảm giá:</span>
+                    <span className="font-medium">-{formatPrice(selectedOrder.discountAmount)}</span>
+                  </div>
+                ) : null}
+                <div className="flex items-center justify-between pt-3 border-t font-bold text-lg">
+                  <span>Tổng cộng:</span>
+                  <span className="text-petshop-orange">{formatPrice(selectedOrder?.totalAmount || 0)}</span>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4 mb-6">
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-500">Trạng thái đơn hàng</p>
+                  <div className="mt-2">{getStatusBadge(selectedOrder?.status)}</div>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-500">Trạng thái thanh toán</p>
+                  <p className="font-medium text-gray-800 mt-2">{selectedOrder?.paymentStatus?.replace(/_/g, ' ') || 'N/A'}</p>
+                </div>
               </div>
 
               <div className="flex gap-3">
-                {selectedOrder.status === 'PENDING' && (
+                {selectedOrder?.status === 'PENDING' && (
                   <>
                     <button
                       onClick={() => handleUpdateStatus(selectedOrder.id, 'CONFIRMED')}
@@ -282,7 +313,7 @@ const AdminOrdersPage = () => {
                     </button>
                   </>
                 )}
-                {selectedOrder.status === 'CONFIRMED' && (
+                {selectedOrder?.status === 'CONFIRMED' && (
                   <button
                     onClick={() => handleUpdateStatus(selectedOrder.id, 'SHIPPING')}
                     className="flex-1 btn-primary"
@@ -290,7 +321,7 @@ const AdminOrdersPage = () => {
                     Giao hàng
                   </button>
                 )}
-                {selectedOrder.status === 'SHIPPING' && (
+                {selectedOrder?.status === 'SHIPPING' && (
                   <button
                     onClick={() => handleUpdateStatus(selectedOrder.id, 'DELIVERED')}
                     className="flex-1 btn-primary"

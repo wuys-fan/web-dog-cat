@@ -26,13 +26,14 @@ const AdminUsersPage = () => {
     }
   };
 
-  const handleToggleStatus = async (userId, currentStatus) => {
-    const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+  const handleToggleStatus = async (userId, currentActive) => {
+    const newActive = !currentActive;
     try {
-      // API call would go here
-      toast.success(`Đã ${newStatus === 'ACTIVE' ? 'kích hoạt' : 'vô hiệu hóa'} tài khoản`);
+      await usersApi.updateStatus(userId, newActive);
+      toast.success(`Đã ${newActive ? 'kích hoạt' : 'vô hiệu hóa'} tài khoản`);
       fetchUsers();
     } catch (error) {
+      console.error('Error toggling user status:', error);
       toast.error('Không thể cập nhật trạng thái');
     }
   };
@@ -40,10 +41,11 @@ const AdminUsersPage = () => {
   const handleDelete = async (userId) => {
     if (window.confirm('Bạn có chắc muốn xóa người dùng này?')) {
       try {
-        // API call would go here
+        await usersApi.delete(userId);
         toast.success('Đã xóa người dùng');
         fetchUsers();
       } catch (error) {
+        console.error('Error deleting user:', error);
         toast.error('Không thể xóa người dùng');
       }
     }
@@ -63,16 +65,16 @@ const AdminUsersPage = () => {
     );
   };
 
-  const getStatusBadge = (status) => {
-    if (status === 'ACTIVE') {
+  const getStatusBadge = (active) => {
+    if (active) {
       return <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">Hoạt động</span>;
     }
     return <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Vô hiệu</span>;
   };
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (user.fullName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = !roleFilter || user.role === roleFilter;
     return matchesSearch && matchesRole;
   });
@@ -133,7 +135,7 @@ const AdminUsersPage = () => {
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm">
           <p className="text-gray-500 text-sm">Hoạt động</p>
-          <p className="text-2xl font-bold text-petshop-orange">{users.filter(u => u.status === 'ACTIVE').length}</p>
+          <p className="text-2xl font-bold text-petshop-orange">{users.filter(u => u.active).length}</p>
         </div>
       </div>
 
@@ -182,20 +184,20 @@ const AdminUsersPage = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4">{getRoleBadge(user.role)}</td>
-                  <td className="px-6 py-4 text-gray-600">{user.ordersCount}</td>
-                  <td className="px-6 py-4">{getStatusBadge(user.status)}</td>
+                  <td className="px-6 py-4 text-gray-600">{user.orderCount || 0}</td>
+                  <td className="px-6 py-4">{getStatusBadge(user.active)}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-2">
                       <button
-                        onClick={() => handleToggleStatus(user.id, user.status)}
+                        onClick={() => handleToggleStatus(user.id, user.active)}
                         className={`p-2 rounded-lg ${
-                          user.status === 'ACTIVE' 
+                          user.active 
                             ? 'text-gray-500 hover:text-red-500 hover:bg-red-50'
                             : 'text-gray-500 hover:text-green-500 hover:bg-green-50'
                         }`}
-                        title={user.status === 'ACTIVE' ? 'Vô hiệu hóa' : 'Kích hoạt'}
+                        title={user.active ? 'Vô hiệu hóa' : 'Kích hoạt'}
                       >
-                        {user.status === 'ACTIVE' ? <FiUserX /> : <FiUserCheck />}
+                        {user.active ? <FiUserX /> : <FiUserCheck />}
                       </button>
                       <button
                         className="p-2 text-gray-500 hover:text-petshop-orange hover:bg-orange-50 rounded-lg"

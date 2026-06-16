@@ -52,20 +52,42 @@ const AdminServicesPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    const pricings = (formData.petTypes || []).map(type => ({
+      petType: type,
+      minWeight: 0.0,
+      maxWeight: 99.0,
+      price: parseFloat(formData.basePrice) || 0
+    }));
+
+    const payload = {
+      name: formData.name,
+      slug: formData.name.toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove Vietnamese accents
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/(^-|-$)/g, ""),
+      description: formData.description,
+      image: formData.image,
+      duration: parseInt(formData.duration) || 60,
+      pricings: pricings
+    };
+
     try {
       if (editingService) {
-        await servicesApi.update(editingService.id, formData);
+        await servicesApi.update(editingService.id, payload);
         toast.success('Cập nhật dịch vụ thành công!');
       } else {
-        await servicesApi.create(formData);
+        await servicesApi.create(payload);
         toast.success('Thêm dịch vụ thành công!');
       }
       fetchServices();
       setShowModal(false);
       resetForm();
     } catch (error) {
-      toast.error('Có lỗi xảy ra');
+      console.error('Error submitting service:', error);
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
     }
   };
 
@@ -73,12 +95,12 @@ const AdminServicesPage = () => {
     setEditingService(service);
     setFormData({
       name: service.name,
-      description: service.description,
-      duration: service.duration,
-      basePrice: service.basePrice,
-      image: service.image,
-      petTypes: service.petTypes,
-      status: service.status,
+      description: service.description || '',
+      duration: service.duration || 60,
+      basePrice: service.minPrice || '',
+      image: service.imageUrl || '',
+      petTypes: service.petType ? [service.petType] : ['DOG', 'CAT'],
+      status: service.active ? 'ACTIVE' : 'INACTIVE',
     });
     setShowModal(true);
   };
@@ -87,7 +109,7 @@ const AdminServicesPage = () => {
     if (window.confirm('Bạn có chắc muốn xóa dịch vụ này?')) {
       try {
         await servicesApi.delete(serviceId);
-        toast.success('Đã xóa dịch vụ');
+        toast.success('Đã xóa dịch vụ (đã chuyển sang trạng thái ẩn)');
         fetchServices();
       } catch (error) {
         toast.error('Không thể xóa dịch vụ');
@@ -97,11 +119,36 @@ const AdminServicesPage = () => {
 
   const handleToggleStatus = async (service) => {
     try {
-      const newStatus = service.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-      await servicesApi.update(service.id, { ...service, status: newStatus });
-      toast.success(`Đã ${newStatus === 'ACTIVE' ? 'kích hoạt' : 'ẩn'} dịch vụ`);
+      const newActive = !service.active;
+      // Soft delete endpoint does active=false, but there is no direct activate endpoint, so we update the full payload
+      const pricings = (service.pricingList || []).map(p => ({
+        petType: p.tierName || 'DOG',
+        minWeight: p.minWeight || 0,
+        maxWeight: p.maxWeight || 99,
+        price: p.price || 0
+      }));
+      
+      const payload = {
+        name: service.name,
+        slug: service.slug,
+        description: service.description,
+        image: service.imageUrl,
+        duration: service.duration,
+        pricings: pricings
+      };
+
+      // If we are deactivating, we can just call deleteService (soft delete)
+      if (!newActive) {
+        await servicesApi.delete(service.id);
+      } else {
+        // Just call update to toggle it or backend will keep active status on save
+        await servicesApi.update(service.id, payload);
+      }
+      
+      toast.success(`Đã cập nhật trạng thái dịch vụ`);
       fetchServices();
     } catch (error) {
+      console.error('Error toggling service status:', error);
       toast.error('Không thể cập nhật trạng thái');
     }
   };
@@ -165,11 +212,11 @@ const AdminServicesPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className={`bg-white rounded-2xl shadow-sm overflow-hidden ${service.status === 'INACTIVE' ? 'opacity-60' : ''}`}
+            className={`bg-white rounded-2xl shadow-sm overflow-hidden ${!service.active ? 'opacity-60' : ''}`}
           >
             <div className="relative h-40">
               <img
-                src={service.image}
+                src={service.imageUrl}
                 alt={service.name}
                 className="w-full h-full object-cover"
               />
@@ -177,13 +224,13 @@ const AdminServicesPage = () => {
                 <button
                   onClick={() => handleToggleStatus(service)}
                   className={`w-8 h-8 rounded-full flex items-center justify-center shadow-md ${
-                    service.status === 'ACTIVE' ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'
+                    service.active ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'
                   }`}
                 >
-                  {service.status === 'ACTIVE' ? <FiEye /> : <FiEyeOff />}
+                  {service.active ? <FiEye /> : <FiEyeOff />}
                 </button>
               </div>
-              {service.status === 'INACTIVE' && (
+              {!service.active && (
                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                   <span className="bg-gray-800 text-white px-3 py-1 rounded-full text-sm">Đã ẩn</span>
                 </div>
@@ -200,16 +247,14 @@ const AdminServicesPage = () => {
                 </div>
                 <div className="flex items-center gap-1 text-petshop-orange font-medium">
                   <FiDollarSign />
-                  Từ {formatPrice(service.basePrice)}
+                  Từ {formatPrice(service.minPrice)}
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-1 mb-4">
-                {service.petTypes.map(type => (
-                  <span key={type} className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
-                    {petTypeOptions.find(p => p.value === type)?.label || type}
-                  </span>
-                ))}
+                <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+                  {petTypeOptions.find(p => p.value === service.petType)?.label || service.petType || 'Tất cả'}
+                </span>
               </div>
 
               <div className="flex items-center justify-between pt-3 border-t">

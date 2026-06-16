@@ -19,11 +19,21 @@ const AdminBookingsPage = () => {
 
   const fetchBookings = async () => {
     try {
-      const response = await bookingsApi.getAll({ status: activeTab === 'all' ? '' : activeTab, date: selectedDate });
-      setBookings(response.data.content || response.data);
+      setLoading(true);
+      let response;
+      if (selectedDate) {
+        response = await bookingsApi.getByDate(selectedDate);
+      } else if (activeTab !== 'all') {
+        response = await bookingsApi.getByStatus(activeTab, { page: 0, size: 100 });
+      } else {
+        response = await bookingsApi.getAll({ page: 0, size: 100 });
+      }
+      const data = response.data.content || response.data;
+      setBookings(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       toast.error('Không thể tải danh sách lịch hẹn');
+      setBookings([]);
     } finally {
       setLoading(false);
     }
@@ -31,12 +41,24 @@ const AdminBookingsPage = () => {
 
   const handleUpdateStatus = async (bookingId, newStatus) => {
     try {
-      await bookingsApi.updateStatus(bookingId, newStatus);
+      if (newStatus === 'CONFIRMED') {
+        await bookingsApi.confirm(bookingId);
+      } else if (newStatus === 'CANCELLED') {
+        await bookingsApi.adminCancel(bookingId, 'Hủy bởi Admin/Staff');
+      } else if (newStatus === 'IN_PROGRESS') {
+        await bookingsApi.start(bookingId);
+      } else if (newStatus === 'COMPLETED') {
+        await bookingsApi.complete(bookingId, 'Hoàn thành dịch vụ');
+      } else {
+        toast.error('Trạng thái không hợp lệ');
+        return;
+      }
       toast.success('Cập nhật trạng thái thành công');
       fetchBookings();
       setSelectedBooking(null);
     } catch (error) {
-      toast.error('Không thể cập nhật trạng thái');
+      console.error('Error updating booking status:', error);
+      toast.error(error.response?.data?.message || 'Không thể cập nhật trạng thái');
     }
   };
 
@@ -73,8 +95,8 @@ const AdminBookingsPage = () => {
   };
 
   const filteredBookings = bookings.filter(booking =>
-    booking.bookingCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    booking.customer.name.toLowerCase().includes(searchTerm.toLowerCase())
+    (booking.bookingCode || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (booking.userName || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -153,14 +175,14 @@ const AdminBookingsPage = () => {
                   <MdPets className="text-petshop-orange" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-800">{booking.pet.name}</p>
-                  <p className="text-sm text-gray-500">{booking.pet.breed} - {booking.pet.weight}kg</p>
+                  <p className="font-medium text-gray-800">{booking.petName}</p>
+                  <p className="text-sm text-gray-500">{booking.petBreed} - {booking.petWeight}kg</p>
                 </div>
               </div>
 
               <div className="text-sm text-gray-600">
-                <p><span className="font-medium">Dịch vụ:</span> {booking.service.name}</p>
-                <p><span className="font-medium">Khách:</span> {booking.customer.name} - {booking.customer.phone}</p>
+                <p><span className="font-medium">Dịch vụ:</span> {booking.serviceName}</p>
+                <p><span className="font-medium">Khách:</span> {booking.userName} - {booking.userPhone}</p>
               </div>
 
               <div className="flex items-center gap-4 text-sm">
@@ -175,7 +197,7 @@ const AdminBookingsPage = () => {
               </div>
 
               <div className="flex items-center justify-between pt-3 border-t">
-                <span className="font-bold text-petshop-orange">{formatPrice(booking.totalAmount)}</span>
+                <span className="font-bold text-petshop-orange">{formatPrice(booking.price)}</span>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setSelectedBooking(booking)}
@@ -245,22 +267,22 @@ const AdminBookingsPage = () => {
             <div className="space-y-4">
               <div className="bg-gray-50 rounded-xl p-4">
                 <h3 className="font-medium text-gray-800 mb-2">Thông tin thú cưng</h3>
-                <p><span className="text-gray-500">Tên:</span> {selectedBooking.pet.name}</p>
-                <p><span className="text-gray-500">Loại:</span> {selectedBooking.pet.type}</p>
-                <p><span className="text-gray-500">Giống:</span> {selectedBooking.pet.breed}</p>
-                <p><span className="text-gray-500">Cân nặng:</span> {selectedBooking.pet.weight} kg</p>
+                <p><span className="text-gray-500">Tên:</span> {selectedBooking.petName}</p>
+                <p><span className="text-gray-500">Loại:</span> {selectedBooking.petType}</p>
+                <p><span className="text-gray-500">Giống:</span> {selectedBooking.petBreed}</p>
+                <p><span className="text-gray-500">Cân nặng:</span> {selectedBooking.petWeight} kg</p>
               </div>
 
               <div className="bg-gray-50 rounded-xl p-4">
                 <h3 className="font-medium text-gray-800 mb-2">Thông tin khách hàng</h3>
-                <p><span className="text-gray-500">Tên:</span> {selectedBooking.customer.name}</p>
-                <p><span className="text-gray-500">SĐT:</span> {selectedBooking.customer.phone}</p>
+                <p><span className="text-gray-500">Tên:</span> {selectedBooking.userName}</p>
+                <p><span className="text-gray-500">SĐT:</span> {selectedBooking.userPhone}</p>
               </div>
 
               <div className="bg-gray-50 rounded-xl p-4">
                 <h3 className="font-medium text-gray-800 mb-2">Chi tiết dịch vụ</h3>
-                <p><span className="text-gray-500">Dịch vụ:</span> {selectedBooking.service.name}</p>
-                <p><span className="text-gray-500">Thời gian:</span> {selectedBooking.service.duration} phút</p>
+                <p><span className="text-gray-500">Dịch vụ:</span> {selectedBooking.serviceName}</p>
+                <p><span className="text-gray-500">Thời gian:</span> {selectedBooking.duration} phút</p>
                 <p><span className="text-gray-500">Ngày hẹn:</span> {selectedBooking.bookingDate}</p>
                 <p><span className="text-gray-500">Giờ hẹn:</span> {selectedBooking.bookingTime}</p>
               </div>
@@ -275,7 +297,7 @@ const AdminBookingsPage = () => {
               <div className="flex items-center justify-between pt-4 border-t">
                 <span className="text-lg font-medium text-gray-800">Tổng cộng</span>
                 <span className="text-2xl font-bold text-petshop-orange">
-                  {formatPrice(selectedBooking.totalAmount)}
+                  {formatPrice(selectedBooking.price)}
                 </span>
               </div>
             </div>

@@ -17,11 +17,19 @@ const AdminOrdersPage = () => {
 
   const fetchOrders = async () => {
     try {
-      const response = await ordersApi.getAll({ status: activeTab === 'all' ? '' : activeTab });
-      setOrders(response.data.content || response.data);
+      setLoading(true);
+      let response;
+      if (activeTab !== 'all') {
+        response = await ordersApi.getByStatus(activeTab, { page: 0, size: 100 });
+      } else {
+        response = await ordersApi.getAll({ page: 0, size: 100 });
+      }
+      const data = response.data.content || response.data;
+      setOrders(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching orders:', error);
       toast.error('Không thể tải danh sách đơn hàng');
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -29,12 +37,24 @@ const AdminOrdersPage = () => {
 
   const handleUpdateStatus = async (orderId, newStatus) => {
     try {
-      await ordersApi.updateStatus(orderId, newStatus);
+      if (newStatus === 'CONFIRMED') {
+        await ordersApi.confirm(orderId);
+      } else if (newStatus === 'CANCELLED') {
+        await ordersApi.adminCancel(orderId, 'Hủy bởi Admin/Staff');
+      } else if (newStatus === 'SHIPPING') {
+        await ordersApi.ship(orderId, 'SP' + orderId + Date.now().toString().slice(-6));
+      } else if (newStatus === 'DELIVERED') {
+        await ordersApi.deliver(orderId);
+      } else {
+        toast.error('Trạng thái không hợp lệ');
+        return;
+      }
       toast.success('Cập nhật trạng thái thành công');
       fetchOrders();
       setSelectedOrder(null);
     } catch (error) {
-      toast.error('Không thể cập nhật trạng thái');
+      console.error('Error updating order status:', error);
+      toast.error(error.response?.data?.message || 'Không thể cập nhật trạng thái');
     }
   };
 
@@ -81,8 +101,8 @@ const AdminOrdersPage = () => {
   };
 
   const filteredOrders = orders.filter(order =>
-    order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.customer.name.toLowerCase().includes(searchTerm.toLowerCase())
+    (order.orderCode || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (order.userName || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -152,11 +172,11 @@ const AdminOrdersPage = () => {
                   transition={{ delay: index * 0.05 }}
                   className="hover:bg-gray-50"
                 >
-                  <td className="px-6 py-4 font-medium text-gray-800">{order.orderNumber}</td>
+                  <td className="px-6 py-4 font-medium text-gray-800">{order.orderCode}</td>
                   <td className="px-6 py-4">
                     <div>
-                      <p className="font-medium text-gray-800">{order.customer.name}</p>
-                      <p className="text-sm text-gray-500">{order.customer.phone}</p>
+                      <p className="font-medium text-gray-800">{order.userName}</p>
+                      <p className="text-sm text-gray-500">{order.userPhone}</p>
                     </div>
                   </td>
                   <td className="px-6 py-4 font-medium text-petshop-orange">
@@ -219,7 +239,7 @@ const AdminOrdersPage = () => {
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-800">
-                Chi tiết đơn hàng {selectedOrder.orderNumber}
+                Chi tiết đơn hàng {selectedOrder.orderCode}
               </h2>
               <button
                 onClick={() => setSelectedOrder(null)}
@@ -233,9 +253,9 @@ const AdminOrdersPage = () => {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="bg-gray-50 rounded-xl p-4">
                   <h3 className="font-medium text-gray-800 mb-2">Thông tin khách hàng</h3>
-                  <p className="text-gray-600">{selectedOrder.customer.name}</p>
-                  <p className="text-gray-600">{selectedOrder.customer.phone}</p>
-                  <p className="text-gray-600">{selectedOrder.customer.email}</p>
+                  <p className="text-gray-600">{selectedOrder.userName}</p>
+                  <p className="text-gray-600">{selectedOrder.userPhone}</p>
+                  <p className="text-gray-600">{selectedOrder.userEmail}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-4">
                   <h3 className="font-medium text-gray-800 mb-2">Địa chỉ giao hàng</h3>
@@ -252,7 +272,7 @@ const AdminOrdersPage = () => {
                         <p className="font-medium text-gray-800">{item.productName}</p>
                         <p className="text-sm text-gray-500">x{item.quantity}</p>
                       </div>
-                      <p className="font-medium text-petshop-orange">{formatPrice(item.price * item.quantity)}</p>
+                      <p className="font-medium text-petshop-orange">{formatPrice(item.unitPrice * item.quantity)}</p>
                     </div>
                   ))}
                 </div>

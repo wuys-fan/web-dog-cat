@@ -13,6 +13,7 @@ const DashboardPage = () => {
   const [recentOrders, setRecentOrders] = useState([]);
   const [recentBookings, setRecentBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -20,22 +21,37 @@ const DashboardPage = () => {
 
   const fetchDashboardData = async () => {
     try {
+      setError(null);
       const response = await dashboardApi.getDashboard();
       const data = response.data;
       setStats({
-        totalProducts: data.totalProducts,
-        totalOrders: data.totalOrders,
-        totalBookings: data.totalBookings,
-        totalUsers: data.totalUsers,
-        totalRevenue: data.totalRevenue,
+        totalProducts: data.totalProducts || 0,
+        totalOrders: data.totalOrders || 0,
+        totalBookings: data.totalBookings || 0,
+        totalUsers: data.totalUsers || 0,
+        totalRevenue: data.totalRevenue || 0,
         orderGrowth: data.orderGrowth,
         bookingGrowth: data.bookingGrowth,
         revenueGrowth: data.revenueGrowth,
       });
       setRecentOrders(data.recentOrders || []);
       setRecentBookings(data.recentBookings || []);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError(err.response?.status === 401 || err.response?.status === 403
+        ? 'Bạn cần đăng nhập với quyền Admin để xem Dashboard.'
+        : 'Không thể tải dữ liệu Dashboard. Vui lòng thử lại.');
+      // Set default stats so the page doesn't crash
+      setStats({
+        totalProducts: 0,
+        totalOrders: 0,
+        totalBookings: 0,
+        totalUsers: 0,
+        totalRevenue: 0,
+        orderGrowth: null,
+        bookingGrowth: null,
+        revenueGrowth: null,
+      });
     } finally {
       setLoading(false);
     }
@@ -72,6 +88,17 @@ const DashboardPage = () => {
     );
   }
 
+  if (!stats) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+        <p className="text-lg">Không thể tải dữ liệu Dashboard</p>
+        <button onClick={fetchDashboardData} className="mt-4 px-4 py-2 bg-petshop-orange text-white rounded-lg hover:bg-orange-600">
+          Thử lại
+        </button>
+      </div>
+    );
+  }
+
   const statCards = [
     {
       title: 'Tổng doanh thu',
@@ -104,6 +131,14 @@ const DashboardPage = () => {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={fetchDashboardData} className="ml-4 px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm">
+            Thử lại
+          </button>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
         <div className="text-sm text-gray-500">

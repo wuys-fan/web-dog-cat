@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiUser, FiMail, FiPhone, FiMapPin, FiEdit2, FiCamera, FiSave } from 'react-icons/fi';
+import { FiUser, FiMail, FiPhone, FiMapPin, FiEdit2, FiCamera, FiSave, FiLock, FiEye, FiEyeOff, FiX } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../../store/authStore';
 import { authApi } from '../../services/api';
 
 const ProfilePage = () => {
-  const { user, setUser } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -24,7 +25,7 @@ const ProfilePage = () => {
         email: user.email || '',
         phone: user.phone || '',
         address: user.address || '',
-        avatar: user.avatar || '',
+        avatar: user.avatar || user.avatarUrl || '',
       });
     }
   }, [user]);
@@ -39,12 +40,17 @@ const ProfilePage = () => {
     setLoading(true);
     
     try {
-      const response = await authApi.updateProfile(formData);
-      setUser(response.data);
+      const response = await authApi.updateProfile({
+        fullName: formData.fullName,
+        phone: formData.phone,
+        address: formData.address,
+      });
+      updateUser(response.data);
       setIsEditing(false);
       toast.success('Cập nhật thông tin thành công!');
     } catch (error) {
-      toast.error('Không thể cập nhật thông tin');
+      const message = error.response?.data?.message || 'Không thể cập nhật thông tin';
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -201,7 +207,10 @@ const ProfilePage = () => {
                 <h3 className="font-medium text-gray-800">Đổi mật khẩu</h3>
                 <p className="text-sm text-gray-500">Cập nhật mật khẩu định kỳ để bảo vệ tài khoản</p>
               </div>
-              <button className="text-petshop-orange hover:underline">
+              <button 
+                onClick={() => setShowPasswordModal(true)}
+                className="text-petshop-orange hover:underline"
+              >
                 Thay đổi
               </button>
             </div>
@@ -211,12 +220,175 @@ const ProfilePage = () => {
                 <h3 className="font-medium text-gray-800">Xác thực 2 bước</h3>
                 <p className="text-sm text-gray-500">Tăng cường bảo mật cho tài khoản của bạn</p>
               </div>
-              <button className="text-petshop-orange hover:underline">
-                Thiết lập
-              </button>
+              <span className="text-gray-400 text-sm italic">Sắp ra mắt</span>
             </div>
           </div>
         </div>
+      </motion.div>
+
+      {/* Password Change Modal */}
+      {showPasswordModal && (
+        <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />
+      )}
+    </div>
+  );
+};
+
+const ChangePasswordModal = ({ onClose }) => {
+  const [loading, setLoading] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (formData.newPassword !== formData.confirmPassword) {
+      toast.error('Mật khẩu xác nhận không khớp');
+      return;
+    }
+    
+    if (formData.newPassword.length < 6) {
+      toast.error('Mật khẩu mới phải có ít nhất 6 ký tự');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      await authApi.changePassword(formData);
+      toast.success('Đổi mật khẩu thành công!');
+      onClose();
+    } catch (error) {
+      const message = error.response?.data?.message || 'Không thể đổi mật khẩu';
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-2xl p-6 w-full max-w-md"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <FiLock /> Đổi mật khẩu
+          </h2>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500"
+          >
+            <FiX />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Mật khẩu hiện tại
+            </label>
+            <div className="relative">
+              <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type={showCurrentPassword ? 'text' : 'password'}
+                name="currentPassword"
+                value={formData.currentPassword}
+                onChange={handleChange}
+                className="input-field pl-11 pr-11"
+                placeholder="Nhập mật khẩu hiện tại"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showCurrentPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Mật khẩu mới
+            </label>
+            <div className="relative">
+              <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type={showNewPassword ? 'text' : 'password'}
+                name="newPassword"
+                value={formData.newPassword}
+                onChange={handleChange}
+                className="input-field pl-11 pr-11"
+                placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
+                required
+                minLength={6}
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showNewPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Xác nhận mật khẩu mới
+            </label>
+            <div className="relative">
+              <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="input-field pl-11 pr-11"
+                placeholder="Nhập lại mật khẩu mới"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 btn-primary"
+            >
+              {loading ? 'Đang xử lý...' : 'Đổi mật khẩu'}
+            </button>
+          </div>
+        </form>
       </motion.div>
     </div>
   );

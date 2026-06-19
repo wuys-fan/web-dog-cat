@@ -1,7 +1,9 @@
 package com.petshop.service.impl;
 
+import com.petshop.dto.request.ChangePasswordRequest;
 import com.petshop.dto.request.LoginRequest;
 import com.petshop.dto.request.RegisterRequest;
+import com.petshop.dto.request.UpdateProfileRequest;
 import com.petshop.dto.response.JwtResponse;
 import com.petshop.dto.response.UserDTO;
 import com.petshop.entity.User;
@@ -98,6 +100,63 @@ public class AuthServiceImpl implements AuthService {
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         
         return mapToDTO(user);
+    }
+    
+    @Override
+    @Transactional
+    public UserDTO updateProfile(UpdateProfileRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new BadRequestException("Chưa đăng nhập");
+        }
+        
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        final Long userId = userPrincipal.getId();
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        user.setFullName(request.getFullName());
+        
+        if (request.getPhone() != null && !request.getPhone().isEmpty()) {
+            // Check if phone is already used by another user
+            userRepository.findByPhone(request.getPhone()).ifPresent(existingUser -> {
+                if (!existingUser.getId().equals(userId)) {
+                    throw new BadRequestException("Số điện thoại đã được sử dụng");
+                }
+            });
+            user.setPhone(request.getPhone());
+        }
+        
+        if (request.getAddress() != null) {
+            user.setAddress(request.getAddress());
+        }
+        
+        User savedUser = userRepository.save(user);
+        return mapToDTO(savedUser);
+    }
+    
+    @Override
+    @Transactional
+    public void changePassword(ChangePasswordRequest request) {
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new BadRequestException("Mật khẩu xác nhận không khớp");
+        }
+        
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new BadRequestException("Chưa đăng nhập");
+        }
+        
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        User user = userRepository.findById(userPrincipal.getId())
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new BadRequestException("Mật khẩu hiện tại không đúng");
+        }
+        
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
     }
     
     @Override

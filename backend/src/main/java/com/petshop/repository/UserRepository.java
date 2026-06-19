@@ -18,6 +18,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     boolean existsByPhone(String phone);
     
+    Optional<User> findByPhone(String phone);
+    
     @Query("SELECT COUNT(u) FROM User u WHERE u.role = 'CUSTOMER'")
     long countCustomers();
     

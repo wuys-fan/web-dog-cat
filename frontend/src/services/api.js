@@ -44,6 +44,8 @@ export const authApi = {
   login: (data) => api.post('/auth/login', data),
   register: (data) => api.post('/auth/register', data),
   getMe: () => api.get('/auth/me'),
+  updateProfile: (data) => api.put('/auth/profile', data),
+  changePassword: (data) => api.put('/auth/change-password', data),
   logout: () => api.post('/auth/logout'),
 };
 
@@ -183,4 +185,12 @@ export const importApi = {
     });
   },
   downloadProductTemplate: () => api.get('/import/products/template', { responseType: 'blob' }),
+};
+
+// Wishlist API
+export const wishlistApi = {
+  getAll: () => api.get('/wishlist'),
+  add: (productId) => api.post(`/wishlist/${productId}`),
+  remove: (productId) => api.delete(`/wishlist/${productId}`),
+  check: (productId) => api.get(`/wishlist/check/${productId}`),
 };

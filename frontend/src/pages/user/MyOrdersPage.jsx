@@ -7,6 +7,7 @@ import { ordersApi } from '../../services/api';
 const MyOrdersPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
@@ -15,10 +16,14 @@ const MyOrdersPage = () => {
 
   const fetchOrders = async () => {
     try {
+      setError(null);
       const response = await ordersApi.getMyOrders();
-      setOrders(response.data);
+      // Backend returns Page object: { content: [...], totalPages, totalElements, ... }
+      const data = response.data;
+      setOrders(Array.isArray(data) ? data : (data.content || []));
     } catch (error) {
       console.error('Error fetching orders:', error);
+      setError('Không thể tải danh sách đơn hàng');
     } finally {
       setLoading(false);
     }

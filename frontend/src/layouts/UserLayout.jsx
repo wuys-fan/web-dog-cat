@@ -14,6 +14,7 @@ const UserLayout = () => {
     { path: '/my-orders', icon: FiPackage, label: 'Đơn hàng của tôi' },
     { path: '/my-bookings', icon: FiCalendar, label: 'Lịch hẹn của tôi' },
     { path: '/my-pets', icon: MdPets, label: 'Thú cưng của tôi' },
+    { path: '/wishlist', icon: FiHeart, label: 'Yêu thích' },
   ];
 
   const handleLogout = () => {

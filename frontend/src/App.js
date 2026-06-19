@@ -28,6 +28,7 @@ import ProfilePage from './pages/user/ProfilePage';
 import MyOrdersPage from './pages/user/MyOrdersPage';
 import MyBookingsPage from './pages/user/MyBookingsPage';
 import MyPetsPage from './pages/user/MyPetsPage';
+import WishlistPage from './pages/user/WishlistPage';
 
 // Admin Pages
 import DashboardPage from './pages/admin/DashboardPage';
@@ -96,6 +97,7 @@ function App() {
             <Route path="my-orders" element={<MyOrdersPage />} />
             <Route path="my-bookings" element={<MyBookingsPage />} />
             <Route path="my-pets" element={<MyPetsPage />} />
+            <Route path="wishlist" element={<WishlistPage />} />
           </Route>
         </Route>
 

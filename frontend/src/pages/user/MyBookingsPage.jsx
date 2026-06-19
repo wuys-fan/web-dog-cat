@@ -8,6 +8,7 @@ import { bookingsApi } from '../../services/api';
 const MyBookingsPage = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
@@ -16,10 +17,14 @@ const MyBookingsPage = () => {
 
   const fetchBookings = async () => {
     try {
+      setError(null);
       const response = await bookingsApi.getMyBookings();
-      setBookings(response.data);
+      // Backend returns Page object: { content: [...], totalPages, totalElements, ... }
+      const data = response.data;
+      setBookings(Array.isArray(data) ? data : (data.content || []));
     } catch (error) {
       console.error('Error fetching bookings:', error);
+      setError('Không thể tải danh sách lịch hẹn');
     } finally {
       setLoading(false);
     }

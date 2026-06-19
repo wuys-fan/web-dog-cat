@@ -290,6 +290,7 @@ const AdminProductFormPage = () => {
             ...(img.id ? { id: img.id } : {}),
             imageUrl: img.imageUrl.trim(),
             isPrimary: img.isPrimary,
+            primary: img.isPrimary,
             sortOrder: index,
           })),
       };

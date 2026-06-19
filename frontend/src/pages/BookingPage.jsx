@@ -99,8 +99,9 @@ const BookingPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!isAuthenticated && !formData.customerPhone) {
-      toast.error('Vui lòng nhập số điện thoại');
+    if (!isAuthenticated) {
+      toast.error('Vui lòng đăng nhập để đặt lịch');
+      navigate('/login?redirect=/booking');
       return;
     }
 
@@ -108,14 +109,14 @@ const BookingPage = () => {
     try {
       await bookingsApi.create({
         serviceId: parseInt(formData.serviceId) || services.find(s => s.slug === formData.serviceId)?.id,
-        petId: formData.petId || null,
+        petId: formData.petId && formData.petId !== 'new' ? parseInt(formData.petId) : null,
         bookingDate: formData.date,
         startTime: formData.time,
-        customerNote: formData.notes,  // BE expects 'customerNote' not 'notes'
+        customerNote: formData.notes,
         customerName: formData.customerName,
         customerPhone: formData.customerPhone,
         customerEmail: formData.customerEmail,
-        petInfo: !formData.petId ? {
+        petInfo: (!formData.petId || formData.petId === 'new') ? {
           name: formData.petName,
           type: formData.petType,
           breed: formData.petBreed,

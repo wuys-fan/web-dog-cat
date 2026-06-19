@@ -249,10 +249,10 @@ const AdminProductsPage = () => {
                     {product.salePrice ? (
                       <div>
                         <span className="font-medium text-petshop-orange">{formatPrice(product.salePrice)}</span>
-                        <span className="text-sm text-gray-400 line-through ml-2">{formatPrice(product.price)}</span>
+                        <span className="text-sm text-gray-400 line-through ml-2">{formatPrice(product.basePrice)}</span>
                       </div>
                     ) : (
-                      <span className="font-medium text-gray-800">{formatPrice(product.price)}</span>
+                      <span className="font-medium text-gray-800">{formatPrice(product.basePrice)}</span>
                     )}
                   </td>
                   <td className="px-6 py-4">
@@ -266,7 +266,7 @@ const AdminProductsPage = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-2">
                       <Link
-                        to={`/products/${product.id}`}
+                        to={`/products/${product.slug}`}
                         className="p-2 text-gray-500 hover:text-blue-500 hover:bg-blue-50 rounded-lg"
                       >
                         <FiEye />

@@ -144,9 +144,24 @@ const ProductsPage = () => {
       if (filters.search) {
         response = await productsApi.search(filters.search, params);
       } else if (filters.category || filters.minPrice || filters.maxPrice) {
+        let mappedCategoryId = null;
+        if (filters.category) {
+          const findCategoryId = (slug, cats) => {
+            for (let c of cats) {
+              if (c.slug === slug) return c.id;
+              if (c.children && c.children.length > 0) {
+                const id = findCategoryId(slug, c.children);
+                if (id) return id;
+              }
+            }
+            return null;
+          };
+          mappedCategoryId = findCategoryId(filters.category, categories);
+        }
+
         response = await productsApi.filter({
           ...params,
-          categoryId: filters.category,
+          categoryId: mappedCategoryId || '',
           minPrice: filters.minPrice,
           maxPrice: filters.maxPrice,
         });

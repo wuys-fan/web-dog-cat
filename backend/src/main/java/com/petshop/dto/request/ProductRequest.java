@@ -39,6 +39,9 @@ public class ProductRequest {
     
     @Data
     public static class VariantRequest {
+        // id dùng khi update để nhận dạng variant cũ (null = tạo mới)
+        private Long id;
+
         @NotBlank(message = "Tên biến thể là bắt buộc")
         private String name;
         
@@ -52,9 +55,12 @@ public class ProductRequest {
     
     @Data
     public static class ImageRequest {
+        // id dùng khi update để nhận dạng ảnh cũ (null = tạo mới)
+        private Long id;
+
         @NotBlank(message = "URL ảnh là bắt buộc")
         private String imageUrl;
-        
+
         private boolean isPrimary = false;
         
         private int sortOrder = 0;

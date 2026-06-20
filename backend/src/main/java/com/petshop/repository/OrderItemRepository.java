@@ -13,4 +13,8 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     
     // Các sản phẩm chưa đánh giá của user
     List<OrderItem> findByOrderUserIdAndReviewedFalse(Long userId);
+
+    // Kiểm tra variant có đang được dùng trong order nào không
+    boolean existsByVariantId(Long variantId);
 }
+

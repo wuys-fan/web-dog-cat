@@ -29,6 +29,7 @@ public class ProductServiceImpl implements ProductService {
     private final BrandRepository brandRepository;
     private final ProductImageRepository productImageRepository;
     private final ProductVariantRepository productVariantRepository;
+    private final OrderItemRepository orderItemRepository;
     
     @Override
     @Transactional
@@ -85,7 +86,8 @@ public class ProductServiceImpl implements ProductService {
                 .map(varReq -> ProductVariant.builder()
                     .product(finalProduct2)
                     .name(varReq.getName())
-                    .sku(varReq.getSku())
+                    // Chuyển SKU rỗng thành null để tránh lỗi unique constraint
+                    .sku(varReq.getSku() != null && !varReq.getSku().isBlank() ? varReq.getSku() : null)
                     .price(varReq.getPrice())
                     .stock(varReq.getStock())
                     .active(true)
@@ -127,45 +129,98 @@ public class ProductServiceImpl implements ProductService {
         product.setBasePrice(request.getBasePrice());
         product.setSalePrice(request.getSalePrice());
         product.setFeatured(request.isFeatured());
-        
-        // Cập nhật images - xóa cũ và thêm mới
+
+        // === Cập nhật IMAGES (smart update: update tại chỗ, tạo mới, xóa nếu không còn) ===
         if (request.getImages() != null) {
-            productImageRepository.deleteAll(product.getImages());
-            product.getImages().clear();
-            
-            Product finalProduct = product;
-            List<ProductImage> newImages = request.getImages().stream()
-                .map(imgReq -> ProductImage.builder()
-                    .product(finalProduct)
-                    .imageUrl(imgReq.getImageUrl())
-                    .isPrimary(imgReq.isPrimary())
-                    .sortOrder(imgReq.getSortOrder())
-                    .build())
+            List<Long> keepImageIds = request.getImages().stream()
+                .filter(img -> img.getId() != null)
+                .map(ProductRequest.ImageRequest::getId)
                 .collect(Collectors.toList());
-            productImageRepository.saveAll(newImages);
-            product.setImages(newImages);
+
+            // Xóa khỏi collection các image không còn trong request
+            // orphanRemoval = true sẽ tự DELETE khỏi DB
+            product.getImages().removeIf(img -> !keepImageIds.contains(img.getId()));
+
+            // Update tại chỗ hoặc tạo mới
+            for (ProductRequest.ImageRequest imgReq : request.getImages()) {
+                if (imgReq.getId() != null) {
+                    // Update image đã có
+                    product.getImages().stream()
+                        .filter(img -> img.getId().equals(imgReq.getId()))
+                        .findFirst()
+                        .ifPresent(img -> {
+                            img.setImageUrl(imgReq.getImageUrl());
+                            img.setPrimary(imgReq.isPrimary());
+                            img.setSortOrder(imgReq.getSortOrder());
+                        });
+                } else {
+                    // Thêm image mới
+                    product.getImages().add(ProductImage.builder()
+                        .product(product)
+                        .imageUrl(imgReq.getImageUrl())
+                        .isPrimary(imgReq.isPrimary())
+                        .sortOrder(imgReq.getSortOrder())
+                        .build());
+                }
+            }
         }
-        
-        // Cập nhật variants - xóa cũ và thêm mới
+
+
+        // === Cập nhật VARIANTS (smart update: không xóa nếu đang được dùng trong order) ===
         if (request.getVariants() != null) {
-            productVariantRepository.deleteAll(product.getVariants());
-            product.getVariants().clear();
-            
-            Product finalProduct2 = product;
-            List<ProductVariant> newVariants = request.getVariants().stream()
-                .map(varReq -> ProductVariant.builder()
-                    .product(finalProduct2)
-                    .name(varReq.getName())
-                    .sku(varReq.getSku())
-                    .price(varReq.getPrice())
-                    .stock(varReq.getStock())
-                    .active(true)
-                    .build())
+            // Thu thập tập hợp id của các variant sẽ giữ lại
+            List<Long> keepIds = request.getVariants().stream()
+                .filter(v -> v.getId() != null)
+                .map(ProductRequest.VariantRequest::getId)
                 .collect(Collectors.toList());
-            productVariantRepository.saveAll(newVariants);
-            product.setVariants(newVariants);
+
+            // Xử lý các variant cũ không còn trong request
+            for (ProductVariant existing : product.getVariants()) {
+                if (!keepIds.contains(existing.getId())) {
+                    if (orderItemRepository.existsByVariantId(existing.getId())) {
+                        // Variant đang được dùng trong order → soft-delete để tránh FK constraint
+                        existing.setActive(false);
+                        existing.setSku(null); // giải phóng SKU để có thể tái sử dụng
+                    }
+                    // Nếu không có trong order thì để orphanRemoval tự xóa
+                }
+            }
+
+            // Xóa các variant không có order khỏi collection (orphanRemoval xử lý DELETE)
+            product.getVariants().removeIf(existing ->
+                !keepIds.contains(existing.getId())
+                && !orderItemRepository.existsByVariantId(existing.getId())
+            );
+
+            // Cập nhật tại chỗ các variant được giữ lại (có id trong request)
+            for (ProductRequest.VariantRequest varReq : request.getVariants()) {
+                if (varReq.getId() != null) {
+                    product.getVariants().stream()
+                        .filter(v -> v.getId().equals(varReq.getId()))
+                        .findFirst()
+                        .ifPresent(v -> {
+                            v.setName(varReq.getName());
+                            v.setSku(varReq.getSku() != null && !varReq.getSku().isBlank()
+                                    ? varReq.getSku() : null);
+                            v.setPrice(varReq.getPrice());
+                            v.setStock(varReq.getStock());
+                            v.setActive(true);
+                        });
+                } else {
+                    // Variant mới (không có id) → tạo mới
+                    product.getVariants().add(ProductVariant.builder()
+                        .product(product)
+                        .name(varReq.getName())
+                        .sku(varReq.getSku() != null && !varReq.getSku().isBlank()
+                                ? varReq.getSku() : null)
+                        .price(varReq.getPrice())
+                        .stock(varReq.getStock())
+                        .active(true)
+                        .build());
+                }
+            }
         }
-        
+
         product = productRepository.save(product);
         return mapToDTO(product);
     }

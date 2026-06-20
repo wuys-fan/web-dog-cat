@@ -78,7 +78,8 @@ const AdminProductFormPage = () => {
           ? product.images.map(img => ({
               id: img.id,
               imageUrl: img.imageUrl || '',
-              isPrimary: img.isPrimary || false,
+              // Backend (Lombok boolean isPrimary) serialize thành JSON key "primary"
+              isPrimary: img.primary || false,
               sortOrder: img.sortOrder || 0,
             }))
           : [{ imageUrl: '', isPrimary: true, sortOrder: 0 }],
@@ -289,8 +290,8 @@ const AdminProductFormPage = () => {
           .map((img, index) => ({
             ...(img.id ? { id: img.id } : {}),
             imageUrl: img.imageUrl.trim(),
+            // Backend setter setIsPrimary() nhận từ JSON key "isPrimary"
             isPrimary: img.isPrimary,
-            primary: img.isPrimary,
             sortOrder: index,
           })),
       };

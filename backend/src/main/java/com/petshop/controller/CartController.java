@@ -13,31 +13,30 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/cart")
 @RequiredArgsConstructor
 public class CartController {
-    
+
     private final CartService cartService;
-    
+
     @GetMapping
     public ResponseEntity<CartDTO> getCart() {
         return ResponseEntity.ok(cartService.getCart());
     }
-    
+
     @PostMapping
-    public ResponseEntity<CartItemDTO> addToCart(@Valid @RequestBody CartItemRequest request) {
+    public ResponseEntity<CartDTO> addToCart(@Valid @RequestBody CartItemRequest request) {
         return ResponseEntity.ok(cartService.addToCart(request));
     }
-    
-    @PutMapping("/{itemId}")
-    public ResponseEntity<CartItemDTO> updateCartItem(@PathVariable Long itemId, 
-                                                   @RequestParam int quantity) {
-        return ResponseEntity.ok(cartService.updateCartItem(itemId, quantity));
+
+    @PutMapping("/{variantId}")
+    public ResponseEntity<CartDTO> updateCartItem(@PathVariable Long variantId,
+                                                  @RequestParam int quantity) {
+        return ResponseEntity.ok(cartService.updateCartItem(variantId, quantity));
     }
-    
-    @DeleteMapping("/{itemId}")
-    public ResponseEntity<Void> removeFromCart(@PathVariable Long itemId) {
-        cartService.removeFromCart(itemId);
-        return ResponseEntity.noContent().build();
+
+    @DeleteMapping("/{variantId}")
+    public ResponseEntity<CartDTO> removeFromCart(@PathVariable Long variantId) {
+        return ResponseEntity.ok(cartService.removeFromCart(variantId));
     }
-    
+
     @DeleteMapping
     public ResponseEntity<Void> clearCart() {
         cartService.clearCart();

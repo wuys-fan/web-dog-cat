@@ -5,22 +5,16 @@ import com.petshop.dto.response.CartDTO;
 import com.petshop.dto.response.CartItemDTO;
 
 public interface CartService {
-    
-    // Lấy giỏ hàng
+
     CartDTO getCart();
-    
-    // Thêm vào giỏ
-    CartItemDTO addToCart(CartItemRequest request);
-    
-    // Cập nhật số lượng
-    CartItemDTO updateCartItem(Long itemId, Integer quantity);
-    
-    // Xóa khỏi giỏ
-    void removeFromCart(Long itemId);
-    
-    // Xóa toàn bộ giỏ
+
+    CartDTO addToCart(CartItemRequest request);
+
+    CartDTO updateCartItem(Long variantId, Integer quantity);
+
+    CartDTO removeFromCart(Long variantId);
+
     void clearCart();
-    
-    // Đếm số lượng
+
     Long countCartItems();
 }

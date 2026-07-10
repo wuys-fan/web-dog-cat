@@ -102,6 +102,10 @@ public class Booking {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "promotion_consumed", nullable = false)
+    @Builder.Default
+    private boolean promotionConsumed = false;
+
     public enum BookingStatus {
         PENDING,        // Chờ xác nhận
         CONFIRMED,      // Đã xác nhận

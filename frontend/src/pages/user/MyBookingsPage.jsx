@@ -5,11 +5,45 @@ import { FiCalendar, FiClock, FiEye, FiCheck, FiX, FiRefreshCw } from 'react-ico
 import { MdPets } from 'react-icons/md';
 import { bookingsApi } from '../../services/api';
 
+const BookingDetailsModal = ({ booking, onClose }) => {
+  if (!booking) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+      >
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-gray-800">Chi tiết lịch hẹn {booking.bookingCode}</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
+            <FiX className="text-xl text-gray-500" />
+          </button>
+        </div>
+        
+        <div className="space-y-6">
+          <div>
+            <h3 className="font-semibold text-gray-800 mb-2">Thông tin dịch vụ</h3>
+            <div className="bg-gray-50 p-4 rounded-xl text-sm text-gray-600">
+              <p><strong>Dịch vụ:</strong> {booking.serviceName}</p>
+              <p><strong>Thú cưng:</strong> {booking.petName} ({booking.petType})</p>
+              <p><strong>Cân nặng:</strong> {booking.petWeight} kg</p>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 const MyBookingsPage = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
   useEffect(() => {
     fetchBookings();
@@ -178,12 +212,12 @@ const MyBookingsPage = () => {
                 )}
 
                 <div className="flex items-center justify-end gap-3 pt-4 border-t">
-                  <Link
-                    to={`/bookings/${booking.id}`}
+                  <button
+                    onClick={() => setSelectedBooking(booking)}
                     className="flex items-center gap-2 px-4 py-2 border-2 border-petshop-orange text-petshop-orange rounded-xl hover:bg-petshop-orange hover:text-white transition-colors"
                   >
                     <FiEye /> Chi tiết
-                  </Link>
+                  </button>
                   {booking.status === 'PENDING' && (
                     <button className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 transition-colors">
                       <FiX /> Hủy lịch
@@ -199,6 +233,13 @@ const MyBookingsPage = () => {
             </motion.div>
           ))}
         </div>
+      )}
+      
+      {selectedBooking && (
+        <BookingDetailsModal 
+          booking={selectedBooking} 
+          onClose={() => setSelectedBooking(null)} 
+        />
       )}
     </div>
   );

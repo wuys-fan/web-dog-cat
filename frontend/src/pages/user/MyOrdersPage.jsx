@@ -4,11 +4,46 @@ import { motion } from 'framer-motion';
 import { FiPackage, FiEye, FiTruck, FiCheck, FiX, FiClock } from 'react-icons/fi';
 import { ordersApi } from '../../services/api';
 
+const OrderDetailsModal = ({ order, onClose }) => {
+  if (!order) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+      >
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-gray-800">Chi tiết đơn hàng {order.orderCode}</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
+            <FiX className="text-xl text-gray-500" />
+          </button>
+        </div>
+        
+        <div className="space-y-6">
+          <div>
+            <h3 className="font-semibold text-gray-800 mb-2">Thông tin giao hàng</h3>
+            <div className="bg-gray-50 p-4 rounded-xl text-sm text-gray-600">
+              <p><strong>Người nhận:</strong> {order.receiverName}</p>
+              <p><strong>Số điện thoại:</strong> {order.receiverPhone}</p>
+              <p><strong>Địa chỉ:</strong> {order.shippingAddress}</p>
+              {order.note && <p><strong>Ghi chú:</strong> {order.note}</p>}
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 const MyOrdersPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   useEffect(() => {
     fetchOrders();
@@ -160,12 +195,12 @@ const MyOrdersPage = () => {
                   </span>
                 </div>
                 <div className="flex gap-3">
-                  <Link
-                    to={`/orders/${order.id}`}
+                  <button
+                    onClick={() => setSelectedOrder(order)}
                     className="flex items-center gap-2 px-4 py-2 border-2 border-petshop-orange text-petshop-orange rounded-xl hover:bg-petshop-orange hover:text-white transition-colors"
                   >
                     <FiEye /> Chi tiết
-                  </Link>
+                  </button>
                   {order.status === 'DELIVERED' && (
                     <button className="btn-primary">
                       Mua lại
@@ -176,6 +211,13 @@ const MyOrdersPage = () => {
             </motion.div>
           ))}
         </div>
+      )}
+      
+      {selectedOrder && (
+        <OrderDetailsModal 
+          order={selectedOrder} 
+          onClose={() => setSelectedOrder(null)} 
+        />
       )}
     </div>
   );

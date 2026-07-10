@@ -1,3 +1,4 @@
+com\petshop\config\RedisConfig.class
 com\petshop\dto\response\OrderItemDTO.class
 com\petshop\dto\response\BrandDTO$BrandDTOBuilder.class
 com\petshop\dto\response\DashboardDTO$TopProductDTO.class
@@ -11,11 +12,13 @@ com\petshop\dto\response\SpaServiceDTO.class
 com\petshop\entity\Order$PaymentMethod.class
 com\petshop\dto\response\OrderDTO.class
 com\petshop\service\impl\InventoryServiceImpl.class
+com\petshop\service\impl\AuthServiceImpl.class
 com\petshop\service\ProductService.class
 com\petshop\dto\response\DashboardDTO$LowStockDTO.class
 com\petshop\security\CustomUserDetailsService.class
 com\petshop\service\impl\BookingServiceImpl.class
 com\petshop\dto\request\PetRequest.class
+com\petshop\repository\WishlistRepository.class
 com\petshop\entity\StockMovement.class
 com\petshop\dto\request\StockMovementRequest.class
 com\petshop\dto\response\DashboardDTO.class
@@ -40,6 +43,7 @@ com\petshop\service\impl\ProductImportServiceImpl$1.class
 com\petshop\controller\ProductController.class
 com\petshop\dto\request\RegisterRequest.class
 com\petshop\entity\OrderItem.class
+com\petshop\dto\request\ChangePasswordRequest.class
 com\petshop\controller\PetController.class
 com\petshop\dto\response\ImportResultDTO.class
 com\petshop\dto\response\PetDTO.class
@@ -74,6 +78,7 @@ com\petshop\dto\response\ImportResultDTO$ImportError.class
 com\petshop\service\SpaServiceService.class
 com\petshop\entity\Order.class
 com\petshop\entity\Voucher.class
+com\petshop\dto\response\CartResponse$CartResponseBuilder.class
 com\petshop\entity\Order$PaymentStatus.class
 com\petshop\service\VoucherService.class
 com\petshop\service\impl\ProductServiceImpl.class
@@ -85,6 +90,7 @@ com\petshop\entity\Review.class
 com\petshop\repository\OrderItemRepository.class
 com\petshop\dto\response\CartItemDTO.class
 com\petshop\service\impl\SpaServiceServiceImpl.class
+com\petshop\dto\request\UpdateProfileRequest.class
 com\petshop\service\impl\ProductImportServiceImpl.class
 com\petshop\dto\response\JwtResponse$JwtResponseBuilder.class
 com\petshop\dto\request\OrderRequest.class
@@ -94,6 +100,7 @@ com\petshop\entity\Brand.class
 com\petshop\repository\ProductImageRepository.class
 com\petshop\service\impl\DashboardServiceImpl.class
 com\petshop\entity\User$UserBuilder.class
+com\petshop\controller\WishlistController.class
 com\petshop\entity\Booking$BookingBuilder.class
 com\petshop\dto\response\DashboardDTO$RecentOrderDTO.class
 com\petshop\dto\response\UserDTO$UserDTOBuilder.class
@@ -150,8 +157,10 @@ com\petshop\entity\Category$CategoryBuilder.class
 com\petshop\dto\response\CartDTO.class
 com\petshop\exception\ResourceNotFoundException.class
 com\petshop\dto\response\ApiResponse$ApiResponseBuilder.class
+com\petshop\entity\Wishlist.class
 com\petshop\service\impl\PetServiceImpl.class
 com\petshop\config\CorsConfig.class
+com\petshop\dto\response\CartResponse.class
 com\petshop\dto\response\ProductImageDTO$ProductImageDTOBuilder.class
 com\petshop\repository\ServicePricingRepository.class
 com\petshop\dto\response\DashboardDTO$DailyRevenueDTO.class
@@ -162,6 +171,7 @@ com\petshop\repository\CategoryRepository.class
 com\petshop\service\impl\ReviewServiceImpl.class
 com\petshop\dto\response\CartDTO$CartDTOBuilder.class
 com\petshop\repository\UserRepository.class
+com\petshop\entity\Wishlist$WishlistBuilder.class
 com\petshop\dto\request\CategoryRequest.class
 com\petshop\dto\response\ServicePricingDTO.class
 com\petshop\entity\Product$ProductBuilder.class
@@ -184,3 +194,4 @@ com\petshop\dto\request\LoginRequest.class
 com\petshop\dto\request\ProductRequest$ImageRequest.class
 com\petshop\dto\response\OrderDTO$OrderDTOBuilder.class
 com\petshop\dto\request\ReviewRequest.class
+com\petshop\service\impl\CartServiceImpl$1.class

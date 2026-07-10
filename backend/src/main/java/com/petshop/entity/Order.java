@@ -131,6 +131,10 @@ public class Order {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "deleted", nullable = false)
+    @Builder.Default
+    private boolean deleted = false;
+
     public enum OrderStatus {
         PENDING,        // Chờ xác nhận
         CONFIRMED,      // Đã xác nhận

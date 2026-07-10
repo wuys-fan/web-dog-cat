@@ -106,6 +106,10 @@ public class Booking {
     @Builder.Default
     private boolean promotionConsumed = false;
 
+    @Column(name = "is_promotion_reward", nullable = false)
+    @Builder.Default
+    private boolean isPromotionReward = false;
+
     public enum BookingStatus {
         PENDING,        // Chờ xác nhận
         CONFIRMED,      // Đã xác nhận

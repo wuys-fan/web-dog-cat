@@ -207,11 +207,11 @@ const AboutPage = () => {
                 transition={{ delay: index * 0.1 }}
                 className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="h-48 overflow-hidden">
+                <div className="h-64 overflow-hidden bg-gray-100">
                   <img
                     src={member.image}
                     alt={member.name}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-300"
                   />
                 </div>
                 <div className="p-4 text-center">

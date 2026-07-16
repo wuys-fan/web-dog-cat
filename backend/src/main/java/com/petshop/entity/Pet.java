@@ -66,7 +66,7 @@ public class Pet {
     private LocalDateTime updatedAt;
 
     public enum PetType {
-        DOG, CAT, BIRD, FISH, HAMSTER, RABBIT, OTHER
+        DOG, CAT, BIRD, FISH, HAMSTER, RABBIT, OTHER, ALL
     }
 
     @Column(name = "is_active") // Đặt tên cột trong DB là is_active cho chuẩn

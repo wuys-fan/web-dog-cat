@@ -237,7 +237,7 @@ const AdminProductsPage = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <img
-                        src={product.image}
+                        src={product.primaryImage || (product.images && product.images.length > 0 ? (product.images[0].imageUrl || product.images[0].url) : '/images/placeholder-product.jpg')}
                         alt={product.name}
                         className="w-12 h-12 rounded-lg object-cover"
                       />

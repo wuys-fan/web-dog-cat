@@ -13,28 +13,28 @@ const AboutPage = () => {
 
   const team = [
     {
-      name: 'Nguyễn Văn A',
-      role: 'Giám đốc điều hành',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300',
-      description: '15 năm kinh nghiệm trong ngành thú y',
+      name: 'Phan Nhựt Quý',
+      role: 'Trưởng nhóm',
+      image: '/images/team/member1.jpg',
+      description: 'Chuyên gia phát triển phần mềm',
     },
     {
-      name: 'Trần Thị B',
-      role: 'Trưởng phòng Spa',
-      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300',
-      description: 'Chuyên gia chăm sóc thú cưng',
+      name: 'Hồ Đình Vinh',
+      role: 'Thành viên',
+      image: '/images/team/member2.jpg',
+      description: 'Kỹ sư Backend & Cơ sở dữ liệu',
     },
     {
-      name: 'Lê Văn C',
-      role: 'Bác sĩ thú y',
-      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300',
-      description: 'Tiến sĩ Thú y, 10 năm kinh nghiệm',
+      name: 'Nguyễn Văn Khánh',
+      role: 'Thành viên',
+      image: '/images/team/member3.jpg',
+      description: 'Kỹ sư Frontend & UI/UX',
     },
     {
-      name: 'Phạm Thị D',
-      role: 'Quản lý cửa hàng',
-      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300',
-      description: 'Chuyên gia tư vấn dinh dưỡng',
+      name: 'Nguyễn Hoàng Sơn',
+      role: 'Thành viên',
+      image: '/images/team/member4.jpg',
+      description: 'Chuyên viên Vận hành & Cloud',
     },
   ];
 

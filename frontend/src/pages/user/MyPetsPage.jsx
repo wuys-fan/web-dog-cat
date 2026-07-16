@@ -18,6 +18,7 @@ const MyPetsPage = () => {
     weight: '',
     gender: 'MALE',
     notes: '',
+    image: '',
   });
 
   const petTypes = [
@@ -72,12 +73,13 @@ const MyPetsPage = () => {
     setEditingPet(pet);
     setFormData({
       name: pet.name,
-      type: pet.petType || pet.type,  // BE returns petType
-      breed: pet.breed,
-      age: pet.age,
-      weight: pet.weight,
-      gender: pet.gender,
+      type: pet.petType || pet.type || 'DOG',
+      breed: pet.breed || '',
+      age: pet.age || '',
+      weight: pet.weight || '',
+      gender: pet.gender || 'MALE',
       notes: pet.notes || '',
+      image: pet.image || pet.avatarUrl || '',
     });
     setShowModal(true);
   };
@@ -274,18 +276,33 @@ const MyPetsPage = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Giống
-                </label>
-                <input
-                  type="text"
-                  name="breed"
-                  value={formData.breed}
-                  onChange={handleChange}
-                  className="input-field"
-                  placeholder="VD: Poodle, Anh lông ngắn..."
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Giống
+                  </label>
+                  <input
+                    type="text"
+                    name="breed"
+                    value={formData.breed}
+                    onChange={handleChange}
+                    className="input-field"
+                    placeholder="VD: Poodle, Anh lông ngắn..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    URL hình ảnh
+                  </label>
+                  <input
+                    type="text"
+                    name="image"
+                    value={formData.image}
+                    onChange={handleChange}
+                    className="input-field"
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

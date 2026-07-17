@@ -61,6 +61,7 @@ const AboutPage = () => {
     },
   ];
 
+  
   return (
     <div>
       {/* Hero Section */}
